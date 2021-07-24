@@ -27,3 +27,9 @@ Version:    4.8.2 or later
 Website:    https://huggingface.co/transformers/
 Repository: https://github.com/huggingface/transformers
 License:    Apache-2.0 License
+
+Component:  scikit-learn
+Version:    0.24.2 or later
+Website:    https://scikit-learn.org/
+Repository: https://github.com/scikit-learn/scikit-learn
+License:    BSD-3-Clause License
