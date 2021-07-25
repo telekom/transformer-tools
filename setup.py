@@ -57,8 +57,8 @@ setuptools.setup(
         "Bug Tracker": source_code + "/issues",
         # "Documentation": "https://telekom.github.io/transformer-tools/",
         "Source Code": source_code,
-        "Contributing": "https://github.com/telekom/transformer-tools/blob/main/CONTRIBUTING.md",
-        "Code of Conduct": "https://github.com/telekom/transformer-tools/blob/main/CODE_OF_CONDUCT.md",  # noqa: E501
+        "Contributing": source_code + "/blob/main/CONTRIBUTING.md",
+        "Code of Conduct": source_code + "/blob/main/CODE_OF_CONDUCT.md",
     },
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
