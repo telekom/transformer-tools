@@ -2,23 +2,95 @@
 # This software is distributed under the terms of the MIT license
 # which is available at https://opensource.org/licenses/MIT
 
-import pandas as pd
-from tqdm import tqdm
-import re
-from preprocess import preprocess
-import math
 import functools
+import math
+import os
+import random
+import re
 import time
+
+import pandas as pd
 import spacy
 import torch
+import yaml
 from fairseq.models.transformer import TransformerModel
-import os
-from transformers import AutoTokenizer, AutoModelForMaskedLM
-import random
+from transformers import AutoModelForMaskedLM, AutoTokenizer
+
+
+def sub_placeholder(string, mask=" "):
+    return re.sub(r"{[a-zA-Z1-9\s]*}", mask, string)
+
+
+def map_apostrophe(string):
+    # rule based
+    mapping = {
+        "'s": " es",
+        "'nem": " einem",
+        "'ne": " eine",
+        "'ner": " einer",
+        "'nen'": " einen",
+        "'n": " ein",
+    }
+    for key in mapping:
+        string = re.sub(key, mapping[key], string)
+    return string
+
+
+def preprocess(text):
+    try:
+        out = text.lower()
+        out = sub_placeholder(out)
+        out = map_apostrophe(out)
+        out = re.sub(" +", " ", out)
+    except:
+        print("failed in processing text")
+        out = ""
+    return out
+
+
+class RamdomAugGenerator:
+    def __init__(self, aug_config, object_map, shuffle_weight=[0.5, 0.5], swap_prob=0.8):
+        """
+        input:
+            aug_config: takes in both ".yaml" (specific for augmentation) or directly dictionary type
+            object_map: dictionary, which maps the namespace in config file to the object
+        """
+        if isinstance(aug_config, str):
+            if aug_config.endswith(".yaml") or aug_config.endswith(".yml"):
+                with open(aug_config, "r") as config:
+                    self.cfg = yaml.safe_load(config)
+        elif isinstance(aug_config, dict):
+            self.cfg = aug_config
+        self.object_map = object_map
+        self.shuffle_weight = shuffle_weight
+        assert len(self.object_map) == len(shuffle_weight)
+        self.swap_prob = swap_prob
+
+        # initialize everything
+        self.object_factory = {}
+        for method in self.cfg:
+            self.object_factory[method] = self.object_map[method](**self.cfg[method])
+
+    def __call__(self, text):
+
+        # when the superclass is called after initialization, it randomly choice from available subclasses,
+        # currently it's hard coded here, which class is available. can be moved to yaml file
+        if random.random() > self.swap_prob:
+            # it does not swap, in this case, just return the input text
+            # print("not augmented")
+            return text
+        # otherwise it will be swapped
+        # shuffle the methods
+        selected_method = random.choices(
+            list(self.object_factory.keys()), weights=self.shuffle_weight
+        )
+        print("selected augmentation method:", selected_method[0])
+        # initialise the selected_method correspondently
+        out = self.object_factory[selected_method[0]].generate_augmentation(text)[0]
+        return out
 
 
 class TextAug:
-
     def __init__(self, nr_aug_per_sent):
         self.nr_aug_per_sent = nr_aug_per_sent
 
@@ -41,7 +113,7 @@ class TextAug:
         augmented_df = pd.DataFrame(columns=["augmented_text", "label"])
         augmented_texts = []
         labels = []
-        for row in tqdm(input_df.itertuples()):
+        for row in input_df.itertuples():
             ori_text = getattr(row, text_column)
             ori_label = getattr(row, label_column)
             for k in range(self.nr_aug_per_sent):
@@ -57,7 +129,6 @@ class TextAug:
 
 
 class TextaugWord(TextAug):
-
     def __init__(self, nr_aug_per_sent, pos_model_path, swap_proportion=0.2):
         super().__init__(nr_aug_per_sent)
         self.pos_filtering = True
@@ -93,7 +164,7 @@ class TextaugWord(TextAug):
         :param valid_pos:
         :return: Boolean: True / False
         """
-        return (spacy_token.pos_ in valid_pos)
+        return spacy_token.pos_ in valid_pos
 
     def _swap_with_weights(self, ori_word, prob):
         # swap a word with candidates or stay the same depending on given probability
@@ -113,18 +184,25 @@ class TextaugWord(TextAug):
         # print("tokens: ", aug_text)
         # for token in self._gen_spacy_token(sent):
         token_list = self._gen_spacy_token(sent)
-        valid_token_idx = [idx for (idx, tok) in enumerate(token_list) if self._is_validword(tok) == True]
+        valid_token_idx = [
+            idx for (idx, tok) in enumerate(token_list) if self._is_validword(tok) == True
+        ]
         # print("valid tokens: ", [(idx, token_list[idx].text) for idx in valid_token_idx])
         # select the token to be swapped
         if len(valid_token_idx) != 0:
-            selected_index = random.sample(valid_token_idx, math.ceil(self.swap_propotion * len(valid_token_idx)))
+            selected_index = random.sample(
+                valid_token_idx, math.ceil(self.swap_propotion * len(valid_token_idx))
+            )
             # print("selected_index", selected_index)
             # then we swap the selected...
             for idx in selected_index:
                 # insert token as key
                 # only insert key if the token is not dictionary
-                cand_list = [w.lower() for w in self.get_candidates(token_list[idx].text.lower()) if
-                             self._is_sameword(token_list[idx].text.lower(), w.lower()) is False]
+                cand_list = [
+                    w.lower()
+                    for w in self.get_candidates(token_list[idx].text.lower())
+                    if self._is_sameword(token_list[idx].text.lower(), w.lower()) is False
+                ]
                 if (len(cand_list) > 0) and (cand_list is not None):
                     # print("cand_list", cand_list)
                     aug_text[idx] = random.choice(cand_list)
@@ -143,8 +221,15 @@ class TextaugWord(TextAug):
 
 
 class TextAugEmbedding(TextaugWord):
-    def __init__(self, nr_aug_per_sent, pos_model_path, embedding_path, score_threshold=0.5, base_embedding="fasttext",
-                 swap_proportion=0.2):
+    def __init__(
+        self,
+        nr_aug_per_sent,
+        pos_model_path,
+        embedding_path,
+        score_threshold=0.5,
+        base_embedding="fasttext",
+        swap_proportion=0.2,
+    ):
         super().__init__(nr_aug_per_sent, pos_model_path, swap_proportion)
         self.base_embedding = base_embedding
         self.aug_model = None
@@ -153,6 +238,7 @@ class TextAugEmbedding(TextaugWord):
             try:
                 import fasttext
                 import fasttext.util
+
                 if isinstance(embedding_path, list):
                     # in order not to mess up the random seed set up in the main script
                     state = random.getstate()
@@ -171,7 +257,11 @@ class TextAugEmbedding(TextaugWord):
 
     @functools.lru_cache(maxsize=1000)
     def get_candidates(self, word):
-        candidates = [k[1] for k in self.aug_model.get_nearest_neighbors(word) if k[0] >= self.score_threshold]
+        candidates = [
+            k[1]
+            for k in self.aug_model.get_nearest_neighbors(word)
+            if k[0] >= self.score_threshold
+        ]
         return candidates
 
     def _generate(self, sent):
@@ -185,28 +275,38 @@ class TextAugEmbedding(TextaugWord):
 
 
 class TextaugBackTrans(TextAug):
-
-    def __init__(self, nr_aug_per_sent, ori_mid_model_path, ori_mid_checkpoints,
-                 mid_ori_model_path, mid_ori_checkpoints, print_mid_text=False):
-        #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    def __init__(
+        self,
+        nr_aug_per_sent,
+        ori_mid_model_path,
+        ori_mid_checkpoints,
+        mid_ori_model_path,
+        mid_ori_checkpoints,
+        print_mid_text=False,
+    ):
+        # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         super().__init__(nr_aug_per_sent)
         self.ori_mid_model_path = ori_mid_model_path
         self.mid_ori_model_path = mid_ori_model_path
         self.ori_mid_checkpoints = ori_mid_checkpoints
         self.mid_ori_checkpoints = mid_ori_checkpoints
-        self.ori2mid_model = self._load_transmodel(self.ori_mid_model_path, self.ori_mid_checkpoints)
-        self.mid2ori_model = self._load_transmodel(self.mid_ori_model_path, self.mid_ori_checkpoints)
+        self.ori2mid_model = self._load_transmodel(
+            self.ori_mid_model_path, self.ori_mid_checkpoints
+        )
+        self.mid2ori_model = self._load_transmodel(
+            self.mid_ori_model_path, self.mid_ori_checkpoints
+        )
         self.print_mid_text = print_mid_text
         print("back translation object initiated")
 
-    def _load_transmodel(self, source2target_modelpath,
-                         checkpoint_files):
+    def _load_transmodel(self, source2target_modelpath, checkpoint_files):
         return TransformerModel.from_pretrained(
             model_name_or_path=source2target_modelpath,
             checkpoint_file=checkpoint_files,
             data_name_or_path=source2target_modelpath,
             bpe="fastbpe",
-            bpe_codes=os.path.join(source2target_modelpath, "bpecodes"))
+            bpe_codes=os.path.join(source2target_modelpath, "bpecodes"),
+        )
 
     def _translate(self, transmodel, text):
         return transmodel.translate(text)
@@ -221,16 +321,14 @@ class TextaugBackTrans(TextAug):
     def generate_augmentation(self, input_text):
         return super().generate_augmentation(input_text)
 
-    def generate_augmentated_dataframe(self, input_df, text_column,
-                                       label_column):
-        return super().generate_augmentated_dataframe(input_df,
-                                                      text_column,
-                                                      label_column)
+    def generate_augmentated_dataframe(self, input_df, text_column, label_column):
+        return super().generate_augmentated_dataframe(input_df, text_column, label_column)
 
 
 class TextaugContextEmbed(TextAug):
-
-    def __init__(self, nr_aug_per_sent, local_model_path, model="bert-base-german-cased", from_local=True):
+    def __init__(
+        self, nr_aug_per_sent, local_model_path, model="bert-base-german-cased", from_local=True
+    ):
         """
 
         :param nr_aug_per_sent: int
@@ -266,8 +364,5 @@ class TextaugContextEmbed(TextAug):
     def generate_augmentation(self, input_text):
         return super().generate_augmentation(input_text)
 
-    def generate_augmentated_dataframe(self, input_df, text_column,
-                                       label_column):
-        return super().generate_augmentated_dataframe(input_df,
-                                                      text_column,
-                                                      label_column)
+    def generate_augmentated_dataframe(self, input_df, text_column, label_column):
+        return super().generate_augmentated_dataframe(input_df, text_column, label_column)

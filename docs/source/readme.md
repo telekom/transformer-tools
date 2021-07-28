@@ -13,7 +13,7 @@ Back Translation is another very promising method to both generate text augmenta
 Bert is a language representation model (Bidirectional Encoder Representations from Transformers) trained on large corpus e.g. wikipedia and books with Masked word prediction and next sentence predicitons. The motivation of using BERT for augmentation is to mask a certain word in input and let BERT predict the masked word. This will return a list of words based on the context of the input sentence.
 
 ## Implementation:
-![Class Relation Diagram](diagrams/Text_Augmentation_Class_Diagram.png)
+![Class Relation Diagram](imgs/Text_Augmentation_Class_Diagram.png)
 
 
 SuperClass TextAug implements basic iterations on input texts or dataframe by applying augmentation functions which are implemented in subclasses.

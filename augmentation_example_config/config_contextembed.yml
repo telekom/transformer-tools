@@ -1,0 +1,5 @@
+TextaugContextEmbed:
+    nr_aug_per_sent: 1
+    local_model_path: "/home/jovyan/voice_analytics/TextAug/models/textaug/bert-base-german-cased/"
+    model: "bert-base-german-cased"
+    from_local: True
