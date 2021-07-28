@@ -13,7 +13,7 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from ml_cloud_tools.s3 import copy_dir_to_s3_dir, copy_s3_dir_to_dir
+from ml_cloud_tools.s3 import copy_dir_to_s3_dir, copy_s3_dir_to_dir, list_s3_files
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
@@ -40,13 +40,17 @@ class S3CheckpointSyncCallback(TrainerCallback):
         """Event called at the end of the initialization of the :class:`~transformers.Trainer`."""
         # TODO: only copy last CP
         source_s3_dir_path = Path(self.s3_dir_name) / Path(args.output_dir).name
-        target_dir_path = Path(args.output_dir).resolve().parent
-        copy_s3_dir_to_dir(
-            source_s3_dir_path.as_posix(),
-            target_dir_path.as_posix(),
-            s3_bucket_name=self.s3_bucket_name,
-            s3_kwargs=self.s3_kwargs,
+        files_on_s3 = list_s3_files(
+            source_s3_dir_path.as_posix(), s3_bucket_name=self.s3_bucket_name
         )
+        if len(files_on_s3) > 0:
+            target_dir_path = Path(args.output_dir).resolve().parent
+            copy_s3_dir_to_dir(
+                source_s3_dir_path.as_posix(),
+                target_dir_path.as_posix(),
+                s3_bucket_name=self.s3_bucket_name,
+                s3_kwargs=self.s3_kwargs,
+            )
 
     def on_save(
         self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs
