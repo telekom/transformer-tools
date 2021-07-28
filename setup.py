@@ -24,7 +24,7 @@ extras_require = {
         "pylint",
         "pylintfileheader",
     ],
-    "optional": [],
+    "optional": ["ml-cloud-tools"],
     "testing": ["pytest"],
     # "doc": ["sphinx", "sphinx_rtd_theme", "myst_parser", "sphinx_copybutton"],
 }
