@@ -30,7 +30,6 @@ extras_require = {
         "seldon_core",
         "pandas",
         "spacy",
-        "yaml",
         "fairseq",
         "cloudpickle",
         "pyyaml",
