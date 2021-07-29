@@ -35,8 +35,8 @@ def map_apostrophe(string):
         "'nen'": " einen",
         "'n": " ein",
     }
-    for key in mapping:
-        string = re.sub(key, mapping[key], string)
+    for key, value in mapping.items():
+        string = re.sub(key, value, string)
     return string
 
 
