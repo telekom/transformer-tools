@@ -116,7 +116,7 @@ class TextAug:
         if isinstance(input_text, str):
             input_text = [input_text]
         for sentence in input_text:
-            for k in range(self.nr_aug_per_sent):
+            for _ in range(self.nr_aug_per_sent):
                 output_list.append(self._generate(sentence))
         return output_list
 
@@ -130,7 +130,7 @@ class TextAug:
         for row in input_df.itertuples():
             ori_text = getattr(row, text_column)
             ori_label = getattr(row, label_column)
-            for k in range(self.nr_aug_per_sent):
+            for _ in range(self.nr_aug_per_sent):
                 try:
                     augmented_texts.append(self._generate(ori_text))
                     labels.append(ori_label)
@@ -155,7 +155,8 @@ class TextaugWord(TextAug):
         self.swap_propotion = swap_proportion
 
     @functools.lru_cache(maxsize=10_000)
-    def _is_sameword(self, original_word, new_word):
+    @staticmethod
+    def _is_sameword(original_word, new_word):
         # clean up and lowercase at the same time
         # only be used at word level
         def only_word(text_chunk):
@@ -174,7 +175,8 @@ class TextaugWord(TextAug):
         return [token for token in doc]
 
     @functools.lru_cache(maxsize=1000)
-    def _is_validword(self, spacy_token, valid_pos=["VERB", "ADV", "NOUN", "ADJ"]):
+    @staticmethod
+    def _is_validword(spacy_token, valid_pos=["VERB", "ADV", "NOUN", "ADJ"]):
         """TODO: fix docstring.
 
         :param spacy_token: spacy token of the word
@@ -186,7 +188,7 @@ class TextaugWord(TextAug):
     def _swap_with_weights(self, ori_word, prob):
         # swap a word with candidates or stay the same depending on given probability
         # prob: probability of being swapped
-        swap = self.candidate_dict.get(ori_word)
+        swap = self.candidate_dict.get(ori_word)  # FIXME: where os candidate_dict set?
         return random.choices(population=[ori_word, random.choice(swap)], weights=[1 - prob, prob])
 
     def get_candidates(self, word):
@@ -271,7 +273,7 @@ class TextAugEmbedding(TextaugWord):
                 # print("fasttext embedding loaded")
                 # print("embedding dimension: ", ft.get_dimension())
             except Exception as err:
-                raise Exception("Import / load fasttext model unsuccessful!", err)
+                raise Exception("Import / load fasttext model unsuccessful!") from err
         else:
             raise ValueError("not supported embedding (yet)")
 
@@ -324,7 +326,8 @@ class TextaugBackTrans(TextAug):
         self.print_mid_text = print_mid_text
         print("back translation object initiated")
 
-    def _load_transmodel(self, source2target_modelpath, checkpoint_files):
+    @staticmethod
+    def _load_transmodel(source2target_modelpath, checkpoint_files):
         return TransformerModel.from_pretrained(
             model_name_or_path=source2target_modelpath,
             checkpoint_file=checkpoint_files,
@@ -333,7 +336,8 @@ class TextaugBackTrans(TextAug):
             bpe_codes=os.path.join(source2target_modelpath, "bpecodes"),
         )
 
-    def _translate(self, transmodel, text):
+    @staticmethod
+    def _translate(transmodel, text):
         return transmodel.translate(text)
 
     def _generate(self, sent):
