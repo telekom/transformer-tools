@@ -2,6 +2,8 @@
 # This software is distributed under the terms of the MIT license
 # which is available at https://opensource.org/licenses/MIT
 
+"""Text augmentation module."""
+
 import functools
 import math
 import os
@@ -18,10 +20,12 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 
 def sub_placeholder(string, mask=" "):
+    """TODO: add docstring."""
     return re.sub(r"{[a-zA-Z1-9\s]*}", mask, string)
 
 
 def map_apostrophe(string):
+    """TODO: add docstring."""
     # rule based
     mapping = {
         "'s": " es",
@@ -37,22 +41,27 @@ def map_apostrophe(string):
 
 
 def preprocess(text):
+    """TODO: add docstring."""
     try:
         out = text.lower()
         out = sub_placeholder(out)
         out = map_apostrophe(out)
         out = re.sub(" +", " ", out)
-    except:
+    except:  # noqa: E722
         print("failed in processing text")
         out = ""
     return out
 
 
 class RamdomAugGenerator:
+    """TODO: add docstring."""
+
     def __init__(self, aug_config, object_map, shuffle_weight=[0.5, 0.5], swap_prob=0.8):
-        """
+        """TODO: fix docstring.
+
         input:
-            aug_config: takes in both ".yaml" (specific for augmentation) or directly dictionary type
+            aug_config: takes in both ".yaml" (specific for augmentation) or directly dictionary
+                type
             object_map: dictionary, which maps the namespace in config file to the object
         """
         if isinstance(aug_config, str):
@@ -72,8 +81,9 @@ class RamdomAugGenerator:
             self.object_factory[method] = self.object_map[method](**self.cfg[method])
 
     def __call__(self, text):
-
-        # when the superclass is called after initialization, it randomly choice from available subclasses,
+        """TODO: add docstring."""
+        # when the superclass is called after initialization,
+        # it randomly choice from available subclasses,
         # currently it's hard coded here, which class is available. can be moved to yaml file
         if random.random() > self.swap_prob:
             # it does not swap, in this case, just return the input text
@@ -91,6 +101,8 @@ class RamdomAugGenerator:
 
 
 class TextAug:
+    """TODO: add docstring."""
+
     def __init__(self, nr_aug_per_sent):
         self.nr_aug_per_sent = nr_aug_per_sent
 
@@ -98,7 +110,8 @@ class TextAug:
         raise NotImplementedError
 
     def generate_augmentation(self, input_text):
-        ## takes in list of text and return list
+        """TODO: add docstring."""
+        # takes in list of text and return list
         output_list = []
         if isinstance(input_text, str):
             input_text = [input_text]
@@ -108,7 +121,8 @@ class TextAug:
         return output_list
 
     def generate_augmentated_dataframe(self, input_df, text_column, label_column):
-        ## input dataframe
+        """TODO: add docstring."""
+        # input dataframe
         # output dataframe does not contain original data
         augmented_df = pd.DataFrame(columns=["augmented_text", "label"])
         augmented_texts = []
@@ -120,7 +134,7 @@ class TextAug:
                 try:
                     augmented_texts.append(self._generate(ori_text))
                     labels.append(ori_label)
-                except:
+                except:  # noqa: E722
                     continue
         # populated them into a dataframe
         augmented_df["augmented_text"] = augmented_texts
@@ -129,6 +143,8 @@ class TextAug:
 
 
 class TextaugWord(TextAug):
+    """TODO: add docstring."""
+
     def __init__(self, nr_aug_per_sent, pos_model_path, swap_proportion=0.2):
         super().__init__(nr_aug_per_sent)
         self.pos_filtering = True
@@ -159,7 +175,8 @@ class TextaugWord(TextAug):
 
     @functools.lru_cache(maxsize=1000)
     def _is_validword(self, spacy_token, valid_pos=["VERB", "ADV", "NOUN", "ADJ"]):
-        """
+        """TODO: fix docstring.
+
         :param spacy_token: spacy token of the word
         :param valid_pos:
         :return: Boolean: True / False
@@ -173,6 +190,7 @@ class TextaugWord(TextAug):
         return random.choices(population=[ori_word, random.choice(swap)], weights=[1 - prob, prob])
 
     def get_candidates(self, word):
+        """TODO: add docstring."""
         raise NotImplementedError
 
     def _generate(self, sent):
@@ -184,9 +202,7 @@ class TextaugWord(TextAug):
         # print("tokens: ", aug_text)
         # for token in self._gen_spacy_token(sent):
         token_list = self._gen_spacy_token(sent)
-        valid_token_idx = [
-            idx for (idx, tok) in enumerate(token_list) if self._is_validword(tok) == True
-        ]
+        valid_token_idx = [idx for (idx, tok) in enumerate(token_list) if self._is_validword(tok)]
         # print("valid tokens: ", [(idx, token_list[idx].text) for idx in valid_token_idx])
         # select the token to be swapped
         if len(valid_token_idx) != 0:
@@ -214,13 +230,17 @@ class TextaugWord(TextAug):
         return out
 
     def generate_augmentation(self, input_text):
+        """TODO: add docstring."""
         return super().generate_augmentation(input_text)
 
     def generate_augmentated_dataframe(self, input_df, text_column, label_column):
+        """TODO: add docstring."""
         return super().generate_augmentated_dataframe(input_df, text_column, label_column)
 
 
 class TextAugEmbedding(TextaugWord):
+    """TODO: add docstring."""
+
     def __init__(
         self,
         nr_aug_per_sent,
@@ -257,6 +277,7 @@ class TextAugEmbedding(TextaugWord):
 
     @functools.lru_cache(maxsize=1000)
     def get_candidates(self, word):
+        """TODO: add docstring."""
         candidates = [
             k[1]
             for k in self.aug_model.get_nearest_neighbors(word)
@@ -268,13 +289,17 @@ class TextAugEmbedding(TextaugWord):
         return super()._generate(sent)
 
     def generate_augmentation(self, input_text):
+        """TODO: add docstring."""
         return super().generate_augmentation(input_text)
 
     def generate_augmentated_dataframe(self, input_df, text_column, label_column):
+        """TODO: add docstring."""
         return super().generate_augmentated_dataframe(input_df, text_column, label_column)
 
 
 class TextaugBackTrans(TextAug):
+    """TODO: add docstring."""
+
     def __init__(
         self,
         nr_aug_per_sent,
@@ -319,21 +344,26 @@ class TextaugBackTrans(TextAug):
         return out
 
     def generate_augmentation(self, input_text):
+        """TODO: add docstring."""
         return super().generate_augmentation(input_text)
 
     def generate_augmentated_dataframe(self, input_df, text_column, label_column):
+        """TODO: add docstring."""
         return super().generate_augmentated_dataframe(input_df, text_column, label_column)
 
 
 class TextaugContextEmbed(TextAug):
+    """TODO: add docstring."""
+
     def __init__(
         self, nr_aug_per_sent, local_model_path, model="bert-base-german-cased", from_local=True
     ):
-        """
+        """TODO: fix docstring.
 
         :param nr_aug_per_sent: int
         :param model: registry name from the transformers library
-        :param model_path: e.g. "./model/bert-case-german-cased/" directory should include both model and tokenizer
+        :param model_path: e.g. "./model/bert-case-german-cased/" directory should include both
+            model and tokenizer
         :param from_local: Boolean
         """
         super().__init__(nr_aug_per_sent)
@@ -347,22 +377,24 @@ class TextaugContextEmbed(TextAug):
 
     def _generate(self, sequence, nr_candidates=5):
         try:
-            input = self.tokenizer.encode(sequence, return_tensors="pt")
-            random_chosen_index = random.choice(range(1, len(input[0]) - 2))
+            _input = self.tokenizer.encode(sequence, return_tensors="pt")
+            random_chosen_index = random.choice(range(1, len(_input[0]) - 2))
             # print(random_chosen_index)
-            input[0][random_chosen_index] = self.tokenizer.mask_token_id
-            mask_token_index = torch.where(input == self.tokenizer.mask_token_id)[1]
-            token_logits = self.model(input).logits
+            _input[0][random_chosen_index] = self.tokenizer.mask_token_id
+            mask_token_index = torch.where(_input == self.tokenizer.mask_token_id)[1]
+            token_logits = self.model(_input).logits
             mask_token_logits = token_logits[0, mask_token_index, :]
             top_tokens = torch.topk(mask_token_logits, nr_candidates, dim=1).indices[0].tolist()
-            input[0][random_chosen_index] = random.choice(top_tokens)
-            output = self.tokenizer.decode(input[0], skip_special_tokens=True)
-        except:
+            _input[0][random_chosen_index] = random.choice(top_tokens)
+            output = self.tokenizer.decode(_input[0], skip_special_tokens=True)
+        except:  # noqa: E722
             return sequence
         return output
 
     def generate_augmentation(self, input_text):
+        """TODO: add docstring."""
         return super().generate_augmentation(input_text)
 
     def generate_augmentated_dataframe(self, input_df, text_column, label_column):
+        """TODO: add docstring."""
         return super().generate_augmentated_dataframe(input_df, text_column, label_column)

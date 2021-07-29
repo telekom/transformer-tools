@@ -16,6 +16,7 @@ disable = [
     "too-many-arguments",
     "invalid-name",
     "line-too-long",  # checked by flake8
+    "bare-except",  # checked by flake8
     "fixme",
     "too-many-instance-attributes",
     "protected-access",
