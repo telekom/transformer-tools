@@ -33,6 +33,7 @@ extras_require = {
         "fairseq",
         "cloudpickle",
         "pyyaml",
+        "fasttext",
     ],
     "testing": ["pytest", "packaging"],
     "doc": ["sphinx", "sphinx_rtd_theme", "myst_parser", "sphinx_copybutton"],
