@@ -348,10 +348,12 @@ class TextaugContextEmbed(TextAug):
         super().__init__(nr_aug_per_sent)
         if from_local is False:
             self.tokenizer = AutoTokenizer.from_pretrained(model)
+            # pylint: disable=no-value-for-parameter
             self.model = AutoModelForMaskedLM.from_pretrained(model)
         else:
             # load from local
             self.tokenizer = AutoTokenizer.from_pretrained(local_model_path)
+            # pylint: disable=no-value-for-parameter
             self.model = AutoModelForMaskedLM.from_pretrained(local_model_path)
 
     def _generate(self, sequence, nr_candidates=5):
