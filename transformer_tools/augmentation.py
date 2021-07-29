@@ -14,7 +14,7 @@ import time
 import pandas as pd
 import spacy
 import torch
-import yaml
+import yaml  # type: ignore
 from fairseq.models.transformer import TransformerModel
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
