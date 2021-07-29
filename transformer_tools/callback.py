@@ -24,17 +24,15 @@ PREFIX_CHECKPOINT_DIR = "checkpoint"
 _re_checkpoint = re.compile(r"\/" + PREFIX_CHECKPOINT_DIR + r"-(\d+)\/")
 
 
-def _select_best_checkpoint_dir(files: List[str]):
+def _best_checkpoint_number(files: List[str]):
     best_cp_number = -1
-    best_cp_file = None
     for file in files:
         cp_search = _re_checkpoint.search(file)
         if cp_search is not None:
             cp_number = int(cp_search.groups()[0])
             if cp_number > best_cp_number:
                 best_cp_number = cp_number
-                best_cp_file = file
-    return Path(best_cp_file).parent.as_posix() if best_cp_file is not None else None
+    return best_cp_number if best_cp_number > -1 else None
 
 
 class S3CheckpointSyncCallback(TrainerCallback):
@@ -59,10 +57,13 @@ class S3CheckpointSyncCallback(TrainerCallback):
             source_s3_dir_path.as_posix(), s3_bucket_name=self.s3_bucket_name
         )
         if len(files_on_s3) > 0:
-            best_checkpoint_dir = _select_best_checkpoint_dir(files_on_s3)
-            if best_checkpoint_dir is not None:
-                source_s3_dir_path = source_s3_dir_path / Path(best_checkpoint_dir)
+            checkpoint_number = _best_checkpoint_number(files_on_s3)
+            if checkpoint_number is not None:
+                source_s3_dir_path = source_s3_dir_path / Path(
+                    f"{PREFIX_CHECKPOINT_DIR}-{checkpoint_number}"
+                )
                 target_dir_path = Path(args.output_dir)
+                target_dir_path.mkdir(parents=True, exist_ok=True)
                 copy_s3_dir_to_dir(
                     source_s3_dir_path.as_posix(),
                     target_dir_path.as_posix(),

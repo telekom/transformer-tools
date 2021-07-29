@@ -2,10 +2,10 @@
 # This software is distributed under the terms of the MIT license
 # which is available at https://opensource.org/licenses/MIT
 
-from transformer_tools.callback import _select_best_checkpoint_dir
+from transformer_tools.callback import _best_checkpoint_number
 
 
-def test_select_best_checkpoint_dir_happy_case():
+def test_best_checkpoint_number_happy_case():
     checkpoint_dirs = [
         "something/checkpoints/checkpoint-100/something-else1.txt",
         "something/checkpoints/checkpoint-100/something-else2.txt",
@@ -14,23 +14,23 @@ def test_select_best_checkpoint_dir_happy_case():
         "something/checkpoints/checkpoint-10000001/something-else2.txt",
     ]
 
-    best_checkpoint_dir = _select_best_checkpoint_dir(checkpoint_dirs)
+    checkpoint_number = _best_checkpoint_number(checkpoint_dirs)
 
-    assert best_checkpoint_dir == "something/checkpoints/checkpoint-10000001"
+    assert checkpoint_number == 10000001
 
 
-def test_select_best_checkpoint_dir_no_valid_checkpoints():
+def test_best_checkpoint_number_no_valid_checkpoints():
     checkpoint_dirs = [
         "something/checkpoints/checkpoint-/something-else1.txt",
         "something/checkpoints/something-else2.txt",
     ]
 
-    best_checkpoint_dir = _select_best_checkpoint_dir(checkpoint_dirs)
+    checkpoint_number = _best_checkpoint_number(checkpoint_dirs)
 
-    assert best_checkpoint_dir is None
+    assert checkpoint_number is None
 
 
-def test_select_best_checkpoint_dir_mixed_case():
+def test_best_checkpoint_number_mixed_case():
     checkpoint_dirs = [
         "something/checkpoints/checkpoint-/something-else1.txt",
         "something/checkpoints/something-else2.txt",
@@ -39,6 +39,6 @@ def test_select_best_checkpoint_dir_mixed_case():
         "something/checkpoints/checkpoint-10000001/something-else2.txt",
     ]
 
-    best_checkpoint_dir = _select_best_checkpoint_dir(checkpoint_dirs)
+    checkpoint_number = _best_checkpoint_number(checkpoint_dirs)
 
-    assert best_checkpoint_dir == "something/checkpoints/checkpoint-10000001"
+    assert checkpoint_number == 10000001
