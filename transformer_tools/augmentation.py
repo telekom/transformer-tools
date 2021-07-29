@@ -172,7 +172,7 @@ class TextaugWord(TextAug):
     def _gen_spacy_token(self, sent):
         sent = preprocess(sent)
         doc = self.de_model(sent)
-        return [token for token in doc]
+        return list(doc)
 
     @functools.lru_cache(maxsize=1000)
     @staticmethod
@@ -231,14 +231,6 @@ class TextaugWord(TextAug):
         out = re.sub(r" \.", ".", out)
         return out
 
-    def generate_augmentation(self, input_text):
-        """TODO: add docstring."""
-        return super().generate_augmentation(input_text)
-
-    def generate_augmentated_dataframe(self, input_df, text_column, label_column):
-        """TODO: add docstring."""
-        return super().generate_augmentated_dataframe(input_df, text_column, label_column)
-
 
 class TextAugEmbedding(TextaugWord):
     """TODO: add docstring."""
@@ -286,17 +278,6 @@ class TextAugEmbedding(TextaugWord):
             if k[0] >= self.score_threshold
         ]
         return candidates
-
-    def _generate(self, sent):
-        return super()._generate(sent)
-
-    def generate_augmentation(self, input_text):
-        """TODO: add docstring."""
-        return super().generate_augmentation(input_text)
-
-    def generate_augmentated_dataframe(self, input_df, text_column, label_column):
-        """TODO: add docstring."""
-        return super().generate_augmentated_dataframe(input_df, text_column, label_column)
 
 
 class TextaugBackTrans(TextAug):
@@ -347,14 +328,6 @@ class TextaugBackTrans(TextAug):
         out = self._translate(self.mid2ori_model, mid_text)
         return out
 
-    def generate_augmentation(self, input_text):
-        """TODO: add docstring."""
-        return super().generate_augmentation(input_text)
-
-    def generate_augmentated_dataframe(self, input_df, text_column, label_column):
-        """TODO: add docstring."""
-        return super().generate_augmentated_dataframe(input_df, text_column, label_column)
-
 
 class TextaugContextEmbed(TextAug):
     """TODO: add docstring."""
@@ -394,11 +367,3 @@ class TextaugContextEmbed(TextAug):
         except:  # noqa: E722
             return sequence
         return output
-
-    def generate_augmentation(self, input_text):
-        """TODO: add docstring."""
-        return super().generate_augmentation(input_text)
-
-    def generate_augmentated_dataframe(self, input_df, text_column, label_column):
-        """TODO: add docstring."""
-        return super().generate_augmentated_dataframe(input_df, text_column, label_column)
