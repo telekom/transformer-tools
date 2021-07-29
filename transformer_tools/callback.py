@@ -8,10 +8,11 @@ Also see :class:`transformers.TrainerCallback`.
 """
 
 import logging
+import re
 import shutil
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from ml_cloud_tools.s3 import copy_dir_to_s3_dir, copy_s3_dir_to_dir, list_s3_files
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
@@ -19,6 +20,21 @@ from transformers.trainer_utils import get_last_checkpoint
 
 
 _logger = logging.getLogger(__name__)
+PREFIX_CHECKPOINT_DIR = "checkpoint"
+_re_checkpoint = re.compile(r"\/" + PREFIX_CHECKPOINT_DIR + r"-(\d+)\/")
+
+
+def _select_best_checkpoint_dir(files: List[str]):
+    best_cp_number = -1
+    best_cp_file = None
+    for file in files:
+        cp_search = _re_checkpoint.search(file)
+        if cp_search is not None:
+            cp_number = int(cp_search.groups()[0])
+            if cp_number > best_cp_number:
+                best_cp_number = cp_number
+                best_cp_file = file
+    return Path(best_cp_file).parent.as_posix() if best_cp_file is not None else None
 
 
 class S3CheckpointSyncCallback(TrainerCallback):
@@ -38,19 +54,21 @@ class S3CheckpointSyncCallback(TrainerCallback):
         self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs
     ):
         """Event called at the end of the initialization of the :class:`~transformers.Trainer`."""
-        # TODO: only copy last CP
         source_s3_dir_path = Path(self.s3_dir_name) / Path(args.output_dir).name
         files_on_s3 = list_s3_files(
             source_s3_dir_path.as_posix(), s3_bucket_name=self.s3_bucket_name
         )
         if len(files_on_s3) > 0:
-            target_dir_path = Path(args.output_dir).resolve().parent
-            copy_s3_dir_to_dir(
-                source_s3_dir_path.as_posix(),
-                target_dir_path.as_posix(),
-                s3_bucket_name=self.s3_bucket_name,
-                s3_kwargs=self.s3_kwargs,
-            )
+            best_checkpoint_dir = _select_best_checkpoint_dir(files_on_s3)
+            if best_checkpoint_dir is not None:
+                source_s3_dir_path = source_s3_dir_path / Path(best_checkpoint_dir)
+                target_dir_path = Path(args.output_dir)
+                copy_s3_dir_to_dir(
+                    source_s3_dir_path.as_posix(),
+                    target_dir_path.as_posix(),
+                    s3_bucket_name=self.s3_bucket_name,
+                    s3_kwargs=self.s3_kwargs,
+                )
 
     def on_save(
         self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs
