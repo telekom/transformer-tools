@@ -59,7 +59,9 @@ class S3CheckpointSyncCallback(TrainerCallback):
         last_checkpoint_dir = get_last_checkpoint(args.output_dir)
         if last_checkpoint_dir is not None:
             source_dir_path = Path(last_checkpoint_dir)
-            target_s3_dir_path = Path(self.s3_dir_name) / source_dir_path.name
+            target_s3_dir_path = (
+                Path(self.s3_dir_name) / Path(args.output_dir).name / source_dir_path.name
+            )
             copy_dir_to_s3_dir(
                 source_dir_path.as_posix(),
                 target_s3_dir_path.as_posix(),
