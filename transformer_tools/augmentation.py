@@ -56,7 +56,7 @@ def preprocess(text):
 class RamdomAugGenerator:
     """TODO: add docstring."""
 
-    def __init__(self, aug_config, object_map, shuffle_weight=[0.5, 0.5], swap_prob=0.8):
+    def __init__(self, aug_config, object_map, shuffle_weight=None, swap_prob=0.8):
         """TODO: fix docstring.
 
         input:
@@ -64,6 +64,7 @@ class RamdomAugGenerator:
                 type
             object_map: dictionary, which maps the namespace in config file to the object
         """
+        shuffle_weight = [0.5, 0.5] if shuffle_weight is None else shuffle_weight
         if isinstance(aug_config, str):
             if aug_config.endswith(".yaml") or aug_config.endswith(".yml"):
                 with open(aug_config, "r") as config:
@@ -176,13 +177,14 @@ class TextaugWord(TextAug):
 
     @functools.lru_cache(maxsize=1000)
     @staticmethod
-    def _is_validword(spacy_token, valid_pos=["VERB", "ADV", "NOUN", "ADJ"]):
+    def _is_validword(spacy_token, valid_pos=None):
         """TODO: fix docstring.
 
         :param spacy_token: spacy token of the word
         :param valid_pos:
         :return: Boolean: True / False
         """
+        valid_pos = ["VERB", "ADV", "NOUN", "ADJ"] if valid_pos is None else valid_pos
         return spacy_token.pos_ in valid_pos
 
     def _swap_with_weights(self, ori_word, prob):
@@ -250,8 +252,8 @@ class TextAugEmbedding(TextaugWord):
         self.score_threshold = score_threshold
         if base_embedding == "fasttext":
             try:
-                import fasttext
-                import fasttext.util
+                import fasttext  # pylint: disable=import-outside-toplevel
+                import fasttext.util  # pylint: disable=import-outside-toplevel
 
                 if isinstance(embedding_path, list):
                     # in order not to mess up the random seed set up in the main script
