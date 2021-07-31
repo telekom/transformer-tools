@@ -47,7 +47,7 @@ def preprocess(text):
         out = sub_placeholder(out)
         out = map_apostrophe(out)
         out = re.sub(" +", " ", out)
-    except:  # noqa: E722
+    except ValueError:  # noqa: E722
         print("failed in processing text")
         out = ""
     return out
@@ -135,7 +135,7 @@ class TextAug:
                 try:
                     augmented_texts.append(self._generate(ori_text))
                     labels.append(ori_label)
-                except:  # noqa: E722
+                except ValueError:  # noqa: E722
                     continue
         # populated them into a dataframe
         augmented_df["augmented_text"] = augmented_texts
@@ -190,7 +190,7 @@ class TextaugWord(TextAug):
     def _swap_with_weights(self, ori_word, prob):
         # swap a word with candidates or stay the same depending on given probability
         # prob: probability of being swapped
-        swap = self.candidate_dict.get(ori_word)  # FIXME: where os candidate_dict set?
+        swap = self.get_candidates(ori_word)
         return random.choices(population=[ori_word, random.choice(swap)], weights=[1 - prob, prob])
 
     def get_candidates(self, word):
@@ -258,8 +258,8 @@ class TextAugEmbedding(TextaugWord):
                 if isinstance(embedding_path, list):
                     # in order not to mess up the random seed set up in the main script
                     state = random.getstate()
-                    t = 1000 * time.time()  # current time in milliseconds
-                    random.seed(int(t) % 2 ** 32)
+                    timestamp = 1000 * time.time()  # current time in milliseconds
+                    random.seed(int(timestamp) % 2 ** 32)
                     embedding_path = random.choice(embedding_path)
                     print("selected embedding: ", embedding_path)
                     random.setstate(state)
@@ -335,7 +335,8 @@ class TextaugContextEmbed(TextAug):
     """TODO: add docstring."""
 
     def __init__(
-        self, nr_aug_per_sent, local_model_path, model="bert-base-german-cased", from_local=True
+        self, nr_aug_per_sent, local_model_path, model="bert-base-german-cased", from_local=True,
+            nr_candidates=5
     ):
         """TODO: fix docstring.
 
@@ -355,8 +356,9 @@ class TextaugContextEmbed(TextAug):
             self.tokenizer = AutoTokenizer.from_pretrained(local_model_path)
             # pylint: disable=no-value-for-parameter
             self.model = AutoModelForMaskedLM.from_pretrained(local_model_path)
+        self.nr_candidates = nr_candidates
 
-    def _generate(self, sequence, nr_candidates=5):
+    def _generate(self, sequence):
         try:
             _input = self.tokenizer.encode(sequence, return_tensors="pt")
             random_chosen_index = random.choice(range(1, len(_input[0]) - 2))
@@ -365,9 +367,9 @@ class TextaugContextEmbed(TextAug):
             mask_token_index = torch.where(_input == self.tokenizer.mask_token_id)[1]
             token_logits = self.model(_input).logits
             mask_token_logits = token_logits[0, mask_token_index, :]
-            top_tokens = torch.topk(mask_token_logits, nr_candidates, dim=1).indices[0].tolist()
+            top_tokens = torch.topk(mask_token_logits, self.nr_candidates, dim=1).indices[0].tolist()
             _input[0][random_chosen_index] = random.choice(top_tokens)
             output = self.tokenizer.decode(_input[0], skip_special_tokens=True)
-        except:  # noqa: E722
+        except ValueError:  # noqa: E722
             return sequence
         return output
