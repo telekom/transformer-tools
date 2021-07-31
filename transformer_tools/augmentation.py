@@ -15,7 +15,6 @@ import pandas as pd
 import spacy
 import torch
 import yaml  # type: ignore
-from fairseq.models.transformer import TransformerModel
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 
@@ -245,25 +244,34 @@ class TextAugEmbedding(TextaugWord):
         score_threshold=0.5,
         base_embedding="fasttext",
         swap_proportion=0.2,
+        from_local=True,
     ):
-        super().__init__(nr_aug_per_sent, pos_model_path, swap_proportion)
+        super().__init__(
+            nr_aug_per_sent, pos_model_path, swap_proportion
+        )  # TODO: test online import
         self.base_embedding = base_embedding
         self.aug_model = None
         self.score_threshold = score_threshold
+        self.embedding_path = embedding_path
         if base_embedding == "fasttext":
             try:
                 import fasttext  # pylint: disable=import-outside-toplevel
                 import fasttext.util  # pylint: disable=import-outside-toplevel
 
-                if isinstance(embedding_path, list):
-                    # in order not to mess up the random seed set up in the main script
-                    state = random.getstate()
-                    timestamp = 1000 * time.time()  # current time in milliseconds
-                    random.seed(int(timestamp) % 2 ** 32)
-                    embedding_path = random.choice(embedding_path)
-                    print("selected embedding: ", embedding_path)
-                    random.setstate(state)
-                self.aug_model = fasttext.load_model(embedding_path)
+                if (from_local is False) or (self.embedding_path is None):
+                    # load german model from fasttext
+                    fasttext.util.download_model("de", if_exists="ignore")
+                    self.embedding_path = "cc.de.300.bin"
+                else:
+                    if isinstance(self.embedding_path, list):
+                        # in order not to mess up the random seed set up in the main script
+                        state = random.getstate()
+                        timestamp = 1000 * time.time()  # current time in milliseconds
+                        random.seed(int(timestamp) % 2 ** 32)
+                        self.embedding_path = random.choice(self.embedding_path)
+                        random.setstate(state)
+                print("selected embedding: ", self.embedding_path)
+                self.aug_model = fasttext.load_model(self.embedding_path)
                 # print("fasttext embedding loaded")
                 # print("embedding dimension: ", ft.get_dimension())
             except Exception as err:
@@ -293,15 +301,17 @@ class TextaugBackTrans(TextAug):
         mid_ori_model_path,
         mid_ori_checkpoints,
         print_mid_text=False,
+        from_local=True,
     ):
         # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         super().__init__(nr_aug_per_sent)
+        self.from_local = from_local
         self.ori_mid_model_path = ori_mid_model_path
         self.mid_ori_model_path = mid_ori_model_path
         self.ori_mid_checkpoints = ori_mid_checkpoints
         self.mid_ori_checkpoints = mid_ori_checkpoints
         self.ori2mid_model = self._load_transmodel(
-            self.ori_mid_model_path, self.ori_mid_checkpoints
+            self.ori_mid_model_path, self.ori_mid_checkpoints, self.from_local
         )
         self.mid2ori_model = self._load_transmodel(
             self.mid_ori_model_path, self.mid_ori_checkpoints
@@ -310,14 +320,32 @@ class TextaugBackTrans(TextAug):
         print("back translation object initiated")
 
     @staticmethod
-    def _load_transmodel(source2target_modelpath, checkpoint_files):
-        return TransformerModel.from_pretrained(
-            model_name_or_path=source2target_modelpath,
-            checkpoint_file=checkpoint_files,
-            data_name_or_path=source2target_modelpath,
-            bpe="fastbpe",
-            bpe_codes=os.path.join(source2target_modelpath, "bpecodes"),
-        )
+    def _load_transmodel(source2target_modelpath, checkpoint_files, from_local):
+        if from_local is True:
+            from fairseq.models.transformer import TransformerModel
+
+            model = TransformerModel.from_pretrained(
+                model_name_or_path=source2target_modelpath,
+                checkpoint_file=checkpoint_files,
+                data_name_or_path=source2target_modelpath,
+                bpe="fastbpe",
+                bpe_codes=os.path.join(source2target_modelpath, "bpecodes"),
+            )
+        else:
+            if source2target_modelpath in torch.hub.list("pytorch/fairseq"):
+                try:
+                    model = torch.hub.load(
+                        "pytorch/fairseq",
+                        "transformer.wmt18.en-de",
+                        checkpoint_file=checkpoint_files,
+                        tokenizer="moses",
+                        bpe="subword_nmt",
+                    )
+                except Exception as err:
+                    raise Exception("Import / load fairseq model unsuccessful!") from err
+            else:
+                raise ValueError("Model can not be found")
+        return model
 
     @staticmethod
     def _translate(transmodel, text):
@@ -335,8 +363,12 @@ class TextaugContextEmbed(TextAug):
     """TODO: add docstring."""
 
     def __init__(
-        self, nr_aug_per_sent, local_model_path, model="bert-base-german-cased", from_local=True,
-            nr_candidates=5
+        self,
+        nr_aug_per_sent,
+        local_model_path,
+        model="bert-base-german-cased",
+        from_local=True,
+        nr_candidates=5,
     ):
         """TODO: fix docstring.
 
@@ -367,7 +399,9 @@ class TextaugContextEmbed(TextAug):
             mask_token_index = torch.where(_input == self.tokenizer.mask_token_id)[1]
             token_logits = self.model(_input).logits
             mask_token_logits = token_logits[0, mask_token_index, :]
-            top_tokens = torch.topk(mask_token_logits, self.nr_candidates, dim=1).indices[0].tolist()
+            top_tokens = (
+                torch.topk(mask_token_logits, self.nr_candidates, dim=1).indices[0].tolist()
+            )
             _input[0][random_chosen_index] = random.choice(top_tokens)
             output = self.tokenizer.decode(_input[0], skip_special_tokens=True)
         except ValueError:  # noqa: E722
