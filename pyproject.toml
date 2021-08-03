@@ -22,6 +22,9 @@ disable = [
     "broad-except",
     "too-few-public-methods",
     "arguments-differ",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-statements",
 ]
 
 [tool.pylint."TYPECHECK"]
