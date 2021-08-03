@@ -10,6 +10,7 @@ import os
 import posixpath
 import shutil
 import sys
+from enum import Enum
 from typing import Any, Dict
 
 import cloudpickle
@@ -41,6 +42,13 @@ _EXTRA_FILES_KEY = "extra_files"
 _REQUIREMENTS_FILE_KEY = "requirements_file"
 
 _logger = logging.getLogger(__name__)
+
+
+class ModelType(Enum):
+    """Model type."""
+
+    SEQUENCE_CLASSIFICATION = 0
+    SEQ_2_SEQ = 1
 
 
 def get_default_conda_env():
@@ -75,6 +83,7 @@ def log_model(
     await_registration_for=DEFAULT_AWAIT_MAX_SLEEP_SECONDS,
     requirements_file=None,
     extra_files=None,
+    model_type: ModelType = ModelType.SEQUENCE_CLASSIFICATION,
     **kwargs,
 ):
     """TODO: add docstring."""
@@ -101,6 +110,7 @@ def log_model(
         await_registration_for=await_registration_for,
         requirements_file=requirements_file,
         extra_files=extra_files,
+        model_type=model_type,
         **kwargs,
     )
 
@@ -235,11 +245,12 @@ def save_model(
     mlflow_model.save(os.path.join(path, MLMODEL_FILE_NAME))
 
 
-def _load_model(path, **kwargs):
+def _load_model(path, model_type: ModelType = ModelType.SEQUENCE_CLASSIFICATION, **kwargs):
     """TODO: add docstring.
 
     Args:
         path: The path to a serialized PyTorch model.
+        model_type: Type of the model.
         kwargs: Additional kwargs to pass to the PyTorch ``torch.load`` function.
     """
     if not os.path.isdir(path):
@@ -274,8 +285,16 @@ def _load_model(path, **kwargs):
                 error_code=RESOURCE_DOES_NOT_EXIST,
             ) from exc
 
-    # pylint: disable=no-value-for-parameter
-    return transformers.AutoModelForSequenceClassification.from_pretrained(path)
+    if model_type == ModelType.SEQUENCE_CLASSIFICATION:
+        # pylint: disable=no-value-for-parameter
+        model = transformers.AutoModelForSequenceClassification.from_pretrained(path)
+    elif model_type == ModelType.SEQ_2_SEQ:
+        # pylint: disable=no-value-for-parameter
+        model = transformers.AutoModelForSeq2SeqLM.from_pretrained(path)
+    else:
+        raise ValueError(f"Invalid 'model_type'! model_type: {model_type}")
+
+    return model
 
 
 def _load_tokenizer(path, **kwargs):
@@ -289,7 +308,7 @@ def _load_tokenizer(path, **kwargs):
     return transformers.AutoTokenizer.from_pretrained(path, **kwargs)
 
 
-def load_model(model_uri, **kwargs):
+def load_model(model_uri, model_type: ModelType = ModelType.SEQUENCE_CLASSIFICATION, **kwargs):
     """TODO: add docstring."""
     local_model_path = _download_artifact_from_uri(artifact_uri=model_uri)
     try:
@@ -322,16 +341,18 @@ def load_model(model_uri, **kwargs):
     transformers_model_artifacts_path = os.path.join(
         local_model_path, transformers_conf["model_data"]
     )
-    return _load_model(path=transformers_model_artifacts_path, **kwargs)
+    return _load_model(path=transformers_model_artifacts_path, model_type=model_type, **kwargs)
 
 
-def mlflow_transformers_flavor(path="/mnt/models", **kwargs):
+def mlflow_transformers_flavor(
+    path="/mnt/models", model_type: ModelType = ModelType.SEQUENCE_CLASSIFICATION, **kwargs
+):
     """TODO: add docstring."""
     model_path = os.path.join(seldon_core.Storage.download(path))
-    return _load_pyfunc(model_path, **kwargs)
+    return _load_pyfunc(model_path, model_type=model_type, **kwargs)
 
 
-def _load_pyfunc(path, **kwargs):
+def _load_pyfunc(path, model_type: ModelType = ModelType.SEQUENCE_CLASSIFICATION, **kwargs):
     """Load PyFunc implementation.
 
     Called by ``pyfunc.load_pyfunc``.
@@ -339,13 +360,68 @@ def _load_pyfunc(path, **kwargs):
     Args:
         path: Local filesystem path to the MLflow Model with the
             ``transformer_pretrained`` flavor.
+        model_type: Model type.
     """
-    return _TransformerPretrainedWrapper(
-        _load_model(path, **kwargs), _load_tokenizer(path, **kwargs)
-    )
+    model_wrapper: Any
+    if model_type == ModelType.SEQUENCE_CLASSIFICATION:
+        model_wrapper = _TransformerSequenceClassificationWrapper(
+            _load_model(path, model_type=model_type, **kwargs), _load_tokenizer(path, **kwargs)
+        )
+    elif model_type == ModelType.SEQ_2_SEQ:
+        model_wrapper = _TransformerSeq2SeqWrapper(
+            _load_model(path, model_type=model_type, **kwargs), _load_tokenizer(path, **kwargs)
+        )
+    else:
+        raise ValueError(f"Invalid 'model_type'! model_type: {model_type}")
+
+    return model_wrapper
 
 
-class _TransformerPretrainedWrapper:
+class _TransformerSeq2SeqWrapper:
+    def __init__(self, transformer_model, tokenizer):
+        self.tokenizer = tokenizer
+        self.transformer_model = transformer_model
+
+    def predict(self, data: np.ndarray, dev="cpu"):
+        """TODO: add docstring.
+
+        Args:
+            data: The input text texts. Must be a 1d numpy array.
+            dev: This argument will not be taken into account.
+        """
+        # Seldon for some reason passes [] instead of cpu.
+        # So ignoring dev and just hardcoding "cpu"
+        del dev
+        assert isinstance(data, np.ndarray)
+        assert data.ndim == 1
+        assert data.size > 0
+
+        results = []
+
+        for text in data:
+            result = ""
+            if (text is not None) and (len(text) > 0):
+                text = text.strip().replace("\n", " ")
+                text = "summarize: " + text
+                device = torch.device("cpu")
+                tokenized_text = self.tokenizer.encode(text, return_tensors="pt").to(device)
+                # summarize
+                summary_ids = self.transformer_model.generate(
+                    tokenized_text,
+                    num_beams=3,
+                    no_repeat_ngram_size=2,
+                    min_length=30,
+                    max_length=100,
+                    early_stopping=True,
+                )
+                result = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+
+            results.append(result)
+
+        return results
+
+
+class _TransformerSequenceClassificationWrapper:
     """TODO: add docstring."""
 
     class ListDataset(torch.utils.data.Dataset):
