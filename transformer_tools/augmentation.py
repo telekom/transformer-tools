@@ -314,7 +314,7 @@ class TextaugBackTrans(TextAug):
             self.ori_mid_model_path, self.ori_mid_checkpoints, self.from_local
         )
         self.mid2ori_model = self._load_transmodel(
-            self.mid_ori_model_path, self.mid_ori_checkpoints
+            self.mid_ori_model_path, self.mid_ori_checkpoints, self.from_local
         )
         self.print_mid_text = print_mid_text
         print("back translation object initiated")
@@ -390,9 +390,9 @@ class TextaugContextEmbed(TextAug):
             self.model = AutoModelForMaskedLM.from_pretrained(local_model_path)
         self.nr_candidates = nr_candidates
 
-    def _generate(self, sequence):
+    def _generate(self, sent):
         try:
-            _input = self.tokenizer.encode(sequence, return_tensors="pt")
+            _input = self.tokenizer.encode(sent, return_tensors="pt")
             random_chosen_index = random.choice(range(1, len(_input[0]) - 2))
             # print(random_chosen_index)
             _input[0][random_chosen_index] = self.tokenizer.mask_token_id
@@ -405,5 +405,5 @@ class TextaugContextEmbed(TextAug):
             _input[0][random_chosen_index] = random.choice(top_tokens)
             output = self.tokenizer.decode(_input[0], skip_special_tokens=True)
         except ValueError:  # noqa: E722
-            return sequence
+            return sent
         return output
