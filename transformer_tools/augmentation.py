@@ -323,7 +323,6 @@ class TextaugBackTrans(TextAug):
     def _load_transmodel(source2target_modelpath, checkpoint_files, from_local):
         if from_local is True:
             from fairseq.models.transformer import TransformerModel # pylint: disable=import-outside-toplevel
-
             model = TransformerModel.from_pretrained(
                 model_name_or_path=source2target_modelpath,
                 checkpoint_file=checkpoint_files,
@@ -336,7 +335,7 @@ class TextaugBackTrans(TextAug):
                 try:
                     model = torch.hub.load(
                         "pytorch/fairseq",
-                        "transformer.wmt18.en-de",
+                        source2target_modelpath,
                         checkpoint_file=checkpoint_files,
                         tokenizer="moses",
                         bpe="subword_nmt",
@@ -377,6 +376,7 @@ class TextaugContextEmbed(TextAug):
         :param model_path: e.g. "./model/bert-case-german-cased/" directory should include both
             model and tokenizer
         :param from_local: Boolean
+        :param nr_candidates: int number of candidates for each masked word
         """
         super().__init__(nr_aug_per_sent)
         if from_local is False:
