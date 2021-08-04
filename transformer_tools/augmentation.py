@@ -19,12 +19,12 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 
 def sub_placeholder(string, mask=" "):
-    """remove placeholders that are used for annonymisation"""
+    """Remove placeholders that are used for annonymisation."""
     return re.sub(r"{[a-zA-Z1-9\s]*}", mask, string)
 
 
 def map_apostrophe(string):
-    """replace special short forms in german back to original forms."""
+    """Replace special short forms in german back to original forms."""
     # rule based
     mapping = {
         "'s": " es",
@@ -322,7 +322,10 @@ class TextaugBackTrans(TextAug):
     @staticmethod
     def _load_transmodel(source2target_modelpath, checkpoint_files, from_local):
         if from_local is True:
-            from fairseq.models.transformer import TransformerModel # pylint: disable=import-outside-toplevel
+            from fairseq.models.transformer import (  # pylint: disable=import-outside-toplevel
+                TransformerModel,
+            )
+
             model = TransformerModel.from_pretrained(
                 model_name_or_path=source2target_modelpath,
                 checkpoint_file=checkpoint_files,
