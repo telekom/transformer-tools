@@ -175,13 +175,13 @@ class TextaugWord(TextAug):
         if len(valid_token_idx) != 0:
             # print("selected_index", selected_index)
             # then we swap the selected...
-            auged_text = [
+            aug_text = [
                 self._swap_with_weights(aug_text[idx], self.swap_dice)
                 if idx in valid_token_idx
                 else word.lower()
                 for (idx, word) in enumerate(aug_text)
             ]
-        out = " ".join(auged_text).strip()
+        out = " ".join(aug_text).strip()
         out = re.sub(" +", " ", out)
         out = re.sub(" ,", ",", out)
         out = re.sub(r" \.", ".", out)
