@@ -11,7 +11,7 @@ import posixpath
 import shutil
 import sys
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import cloudpickle
 import mlflow.pyfunc.utils as pyfunc_utils
@@ -362,7 +362,7 @@ def _load_pyfunc(path, model_type: ModelType = ModelType.SEQUENCE_CLASSIFICATION
             ``transformer_pretrained`` flavor.
         model_type: Model type.
     """
-    model_wrapper: Any
+    model_wrapper: Union[_TransformerSequenceClassificationWrapper, _TransformerSeq2SeqWrapper]
     if model_type == ModelType.SEQUENCE_CLASSIFICATION:
         model_wrapper = _TransformerSequenceClassificationWrapper(
             _load_model(path, model_type=model_type, **kwargs), _load_tokenizer(path, **kwargs)
