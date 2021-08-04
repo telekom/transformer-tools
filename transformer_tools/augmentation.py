@@ -114,10 +114,9 @@ class TextaugWord(TextAug):
     def __init__(self, nr_aug_per_sent, pos_model_path, swap_dice=0.2):
         super().__init__(nr_aug_per_sent)
         self.pos_filtering = True
-        # decides with which probability a word is swapped or it stays the same
         self.pos_model_path = pos_model_path
         self.de_model = spacy.load(self.pos_model_path)
-        # portion of valid token to be swapped
+        # decides with which probability a word is swapped or it stays the same
         self.swap_dice = swap_dice
 
     @functools.lru_cache(maxsize=10_000)
@@ -176,12 +175,13 @@ class TextaugWord(TextAug):
         if len(valid_token_idx) != 0:
             # print("selected_index", selected_index)
             # then we swap the selected...
-            for idx in valid_token_idx:
-                # insert token as key
-                # only insert key if the token is not dictionary
-                aug_text[idx] = self._swap_with_weights(aug_text[idx], self.swap_dice)
-
-        out = " ".join(aug_text).strip()
+            auged_text = [
+                self._swap_with_weights(aug_text[idx], self.swap_dice)
+                if idx in valid_token_idx
+                else word.lower()
+                for (idx, word) in enumerate(aug_text)
+            ]
+        out = " ".join(auged_text).strip()
         out = re.sub(" +", " ", out)
         out = re.sub(" ,", ",", out)
         out = re.sub(r" \.", ".", out)
@@ -198,13 +198,11 @@ class TextAugEmbedding(TextaugWord):
         embedding_path,
         score_threshold=0.5,
         base_embedding="fasttext",
-        swap_proportion=0.2,
+        swap_dice=0.2,
         from_local=True,
         language="de",
     ):
-        super().__init__(
-            nr_aug_per_sent, pos_model_path, swap_proportion
-        )  # TODO: test online import
+        super().__init__(nr_aug_per_sent, pos_model_path, swap_dice)  # TODO: test online import
         self.base_embedding = base_embedding
         self.aug_model = None
         self.score_threshold = score_threshold
@@ -238,12 +236,12 @@ class TextAugEmbedding(TextaugWord):
             raise ValueError("not supported embedding (yet)")
 
     @functools.lru_cache(maxsize=1000)
-    def get_candidates(self, word):
+    def get_candidates(self, word, nr=5):
         """TODO: add docstring."""
         candidates = [
-            k[1]
-            for k in self.aug_model.get_nearest_neighbors(word)
-            if k[0] >= self.score_threshold
+            i[1]
+            for i in self.aug_model.get_nearest_neighbors(word, k=nr)
+            if i[0] >= self.score_threshold
         ]
         return candidates
 
