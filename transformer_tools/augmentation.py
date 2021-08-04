@@ -18,40 +18,6 @@ import yaml  # type: ignore
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 
-def sub_placeholder(string, mask=" "):
-    """Remove placeholders that are used for annonymisation."""
-    return re.sub(r"{[a-zA-Z1-9\s]*}", mask, string)
-
-
-def map_apostrophe(string):
-    """Replace special short forms in german back to original forms."""
-    # rule based
-    mapping = {
-        "'s": " es",
-        "'nem": " einem",
-        "'ne": " eine",
-        "'ner": " einer",
-        "'nen'": " einen",
-        "'n": " ein",
-    }
-    for key, value in mapping.items():
-        string = re.sub(key, value, string)
-    return string
-
-
-def preprocess(text):
-    """TODO: add docstring."""
-    try:
-        out = text.lower()
-        out = sub_placeholder(out)
-        out = map_apostrophe(out)
-        out = re.sub(" +", " ", out)
-    except ValueError:  # noqa: E722
-        print("failed in processing text")
-        out = ""
-    return out
-
-
 class RamdomAugGenerator:
     """TODO: add docstring."""
 
@@ -145,14 +111,14 @@ class TextAug:
 class TextaugWord(TextAug):
     """TODO: add docstring."""
 
-    def __init__(self, nr_aug_per_sent, pos_model_path, swap_proportion=0.2):
+    def __init__(self, nr_aug_per_sent, pos_model_path, swap_dice=0.2):
         super().__init__(nr_aug_per_sent)
         self.pos_filtering = True
         # decides with which probability a word is swapped or it stays the same
         self.pos_model_path = pos_model_path
         self.de_model = spacy.load(self.pos_model_path)
         # portion of valid token to be swapped
-        self.swap_propotion = swap_proportion
+        self.swap_dice = swap_dice
 
     @functools.lru_cache(maxsize=10_000)
     @staticmethod
@@ -170,7 +136,6 @@ class TextaugWord(TextAug):
 
     @functools.lru_cache(maxsize=10_000)
     def _gen_spacy_token(self, sent):
-        sent = preprocess(sent)
         doc = self.de_model(sent)
         return list(doc)
 
@@ -209,22 +174,12 @@ class TextaugWord(TextAug):
         # print("valid tokens: ", [(idx, token_list[idx].text) for idx in valid_token_idx])
         # select the token to be swapped
         if len(valid_token_idx) != 0:
-            selected_index = random.sample(
-                valid_token_idx, math.ceil(self.swap_propotion * len(valid_token_idx))
-            )
             # print("selected_index", selected_index)
             # then we swap the selected...
-            for idx in selected_index:
+            for idx in valid_token_idx:
                 # insert token as key
                 # only insert key if the token is not dictionary
-                cand_list = [
-                    w.lower()
-                    for w in self.get_candidates(token_list[idx].text.lower())
-                    if self._is_sameword(token_list[idx].text.lower(), w.lower()) is False
-                ]
-                if (len(cand_list) > 0) and (cand_list is not None):
-                    # print("cand_list", cand_list)
-                    aug_text[idx] = random.choice(cand_list)
+                aug_text[idx] = self._swap_with_weights(aug_text[idx], self.swap_dice)
 
         out = " ".join(aug_text).strip()
         out = re.sub(" +", " ", out)
@@ -245,6 +200,7 @@ class TextAugEmbedding(TextaugWord):
         base_embedding="fasttext",
         swap_proportion=0.2,
         from_local=True,
+        language="de",
     ):
         super().__init__(
             nr_aug_per_sent, pos_model_path, swap_proportion
@@ -253,15 +209,17 @@ class TextAugEmbedding(TextaugWord):
         self.aug_model = None
         self.score_threshold = score_threshold
         self.embedding_path = embedding_path
+        self.language = language
         if base_embedding == "fasttext":
             try:
                 import fasttext  # pylint: disable=import-outside-toplevel
                 import fasttext.util  # pylint: disable=import-outside-toplevel
 
-                if (from_local is False) or (self.embedding_path is None):
+                if from_local is False:
                     # load german model from fasttext
-                    fasttext.util.download_model("de", if_exists="ignore")
-                    self.embedding_path = "cc.de.300.bin"
+                    fasttext.util.download_model(self.language, if_exists="ignore")
+                    # if from_local is false, embedding_path configured in the configuration file should be the name
+                    # of model, for example: "cc.de.300.bin"
                 else:
                     if isinstance(self.embedding_path, list):
                         # in order not to mess up the random seed set up in the main script
