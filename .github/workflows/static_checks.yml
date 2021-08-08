@@ -10,7 +10,7 @@ jobs:
   checks:
     env:
       src: "transformer_tools"
-      other-src: "tests setup.py"
+      other-src: "tests docs setup.py"
 
     runs-on: ubuntu-latest
 
