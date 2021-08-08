@@ -26,7 +26,7 @@ extras_require = {
     ],
     "optional": ["ml-cloud-tools", "mlflow", "seldon_core", "cloudpickle", "pyyaml"],
     "testing": ["pytest", "packaging"],
-    # "doc": ["sphinx", "sphinx_rtd_theme", "myst_parser", "sphinx_copybutton"],
+    "doc": ["sphinx", "sphinx_rtd_theme", "myst_parser", "sphinx_copybutton"],
 }
 
 
