@@ -1,6 +1,6 @@
 src := transformer_tools
 test-src := tests
-other-src := setup.py
+other-src := docs setup.py
 
 check:
 	pydocstyle --count $(src) $(test-src) $(other-src)
