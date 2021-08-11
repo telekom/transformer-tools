@@ -55,7 +55,7 @@ setuptools.setup(
     url=source_code,
     project_urls={
         "Bug Tracker": source_code + "/issues",
-        # "Documentation": "https://telekom.github.io/transformer-tools/",
+        "Code Doc": "https://telekom.github.io/transformer-tools/",
         "Source Code": source_code,
         "Contributing": source_code + "/blob/main/CONTRIBUTING.md",
         "Code of Conduct": source_code + "/blob/main/CODE_OF_CONDUCT.md",
