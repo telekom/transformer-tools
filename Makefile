@@ -21,3 +21,6 @@ test:
 
 sphinx:
 	cd docs && $(MAKE) clean html && cd ..
+
+page:
+	xdg-open docs/build/html/index.html
