@@ -2,7 +2,7 @@
 # This software is distributed under the terms of the MIT license
 # which is available at https://opensource.org/licenses/MIT
 
-from transformer_tools.callback import _best_checkpoint_number
+from transformer_tools.s3_callback import _best_checkpoint_number
 
 
 def test_best_checkpoint_number_happy_case():
