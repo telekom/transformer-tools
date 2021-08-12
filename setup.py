@@ -12,7 +12,7 @@ import setuptools
 project_name = "transformer_tools"
 source_code = "https://github.com/telekom/transformer-tools"
 keywords = "torch pytorch transformers nlp nlu"
-install_requires = ["torch", "transformers", "scikit-learn"]
+install_requires = ["torch", "transformers", "scikit-learn", "pandas", "numpy"]
 extras_require = {
     "checking": [
         "black",
