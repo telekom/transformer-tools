@@ -26,6 +26,12 @@ It can be installed with pip:
 $ pip install transformer-tools
 ```
 
+Some modules need optional dependencies. To install all of them use:
+
+```bash
+$ pip install transformer-tools[optional]
+```
+
 ## Support and Feedback
 
 The following channels are available for discussions, feedback, and support requests:
