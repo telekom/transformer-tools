@@ -177,56 +177,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-transformer_tools.callback">
-<span id="callback"></span><h1><a class="reference internal" href="#module-transformer_tools.callback" title="transformer_tools.callback"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callback</span></code></a><a class="headerlink" href="#module-transformer_tools.callback" title="Permalink to this headline">¶</a></h1>
-<p>Transformers callbacks.</p>
-<p>Also see <a class="reference external" href="https://huggingface.co/transformers/main_classes/callback.html#transformers.TrainerCallback" title="(in transformers)"><code class="xref py py-class docutils literal notranslate"><span class="pre">transformers.TrainerCallback</span></code></a>.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="transformer_tools.callback.S3CheckpointSyncCallback">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">transformer_tools.callback.</span></span><span class="sig-name descname"><span class="pre">S3CheckpointSyncCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s3_dir_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s3_bucket_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s3_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/transformer_tools/callback.html#S3CheckpointSyncCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transformer_tools.callback.S3CheckpointSyncCallback" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">transformers.trainer_callback.TrainerCallback</span></code></p>
-<p>Save and recover checkpoints by using S3.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>s3_dir_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – </p></li>
-<li><p><strong>s3_bucket_name</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>]</em>) – </p></li>
-<li><p><strong>s3_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>Any</em><em>]</em><em>]</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="transformer_tools.callback.S3CheckpointSyncCallback.on_init_end">
-<span class="sig-name descname"><span class="pre">on_init_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/transformer_tools/callback.html#S3CheckpointSyncCallback.on_init_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transformer_tools.callback.S3CheckpointSyncCallback.on_init_end" title="Permalink to this definition">¶</a></dt>
-<dd><p>Event called at the end of the initialization of the <a class="reference external" href="https://huggingface.co/transformers/main_classes/trainer.html#transformers.Trainer" title="(in transformers)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Trainer</span></code></a>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> (<em>transformers.training_args.TrainingArguments</em>) – </p></li>
-<li><p><strong>state</strong> (<em>transformers.trainer_callback.TrainerState</em>) – </p></li>
-<li><p><strong>control</strong> (<em>transformers.trainer_callback.TrainerControl</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="transformer_tools.callback.S3CheckpointSyncCallback.on_save">
-<span class="sig-name descname"><span class="pre">on_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/transformer_tools/callback.html#S3CheckpointSyncCallback.on_save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transformer_tools.callback.S3CheckpointSyncCallback.on_save" title="Permalink to this definition">¶</a></dt>
-<dd><p>Event called after a checkpoint save.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> (<em>transformers.training_args.TrainingArguments</em>) – </p></li>
-<li><p><strong>state</strong> (<em>transformers.trainer_callback.TrainerState</em>) – </p></li>
-<li><p><strong>control</strong> (<em>transformers.trainer_callback.TrainerControl</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+  <div class="section" id="callback">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">callback</span></code><a class="headerlink" href="#callback" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
