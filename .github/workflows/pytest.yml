@@ -24,10 +24,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    # --use-deprecated=legacy-resolver is a temporary fix and should be disabled asap
+    # it is to install spacy - see https://stackoverflow.com/a/65793484/271118
     - name: Install dependencies
       run: |
         python -m pip install -U pip
-        pip install --progress-bar off -U .[optional,testing]
+        pip install --progress-bar off -U .[optional,testing] --use-deprecated=legacy-resolver
 
     - name: Test with pytest
       run: pytest tests
