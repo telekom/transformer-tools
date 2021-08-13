@@ -29,7 +29,7 @@ extras_require = {
         "mlflow",
         "seldon_core",
         "pandas",
-        "spacy",
+        # "spacy",
         "fairseq",
         "cloudpickle",
         "pyyaml",
