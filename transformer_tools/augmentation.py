@@ -215,8 +215,8 @@ class TextAugEmbedding(TextaugWord):
                 if from_local is False:
                     # load german model from fasttext
                     fasttext.util.download_model(self.language, if_exists="ignore")
-                    # if from_local is false, embedding_path configured in the configuration file should be the name
-                    # of model, for example: "cc.de.300.bin"
+                    # if from_local is false, embedding_path configured in the configuration file
+                    # should be the name of model, for example: "cc.de.300.bin"
                 else:
                     if isinstance(self.embedding_path, list):
                         # in order not to mess up the random seed set up in the main script
