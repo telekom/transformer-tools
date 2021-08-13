@@ -5,7 +5,6 @@
 """Text augmentation module."""
 
 import functools
-import math
 import os
 import random
 import re
