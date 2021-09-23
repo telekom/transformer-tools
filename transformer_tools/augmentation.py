@@ -124,7 +124,7 @@ class TextaugWord(TextAug):
         # decides with which probability a word is swapped or it stays the same
         self.swap_dice = swap_dice
 
-    #@functools.lru_cache(maxsize=10_000)
+    @functools.lru_cache(maxsize=10_000)
     #@staticmethod
     def _is_sameword(original_word, new_word):
         # clean up and lowercase at the same time
@@ -138,14 +138,14 @@ class TextaugWord(TextAug):
         new = only_word(new_word.lower())
         return ori == new
 
-    #@functools.lru_cache(maxsize=10_000)
+    @functools.lru_cache(maxsize=10_000)
     def _gen_spacy_token(self, sent):
         doc = self.de_model(sent)
-        return list(doc)
+        return [token for token in doc]
 
-    #@functools.lru_cache(maxsize=1000)
+    @functools.lru_cache(maxsize=1000)
     #@staticmethod
-    def _is_validword(spacy_token, valid_pos=None):
+    def _is_validword(self, spacy_token, valid_pos=None):
         """TODO: fix docstring.
 
         :param spacy_token: spacy token of the word
@@ -173,7 +173,8 @@ class TextaugWord(TextAug):
         aug_text = [token.text for token in self._gen_spacy_token(sent)]
         # print("tokens: ", aug_text)
         # for token in self._gen_spacy_token(sent):
-        token_list = self._gen_spacy_token(sent)
+        token_list = self._gen_spacy_token(sent)#
+        print(token_list)
         valid_token_idx = [idx for (idx, tok) in enumerate(token_list) if self._is_validword(tok)]
         # print("valid tokens: ", [(idx, token_list[idx].text) for idx in valid_token_idx])
         # select the token to be swapped
