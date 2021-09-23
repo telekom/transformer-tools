@@ -113,13 +113,19 @@ class TextaugWord(TextAug):
     def __init__(self, nr_aug_per_sent, pos_model_path, swap_dice=0.2):
         super().__init__(nr_aug_per_sent)
         self.pos_filtering = True
-        self.pos_model_path = pos_model_path
-        self.de_model = spacy.load(self.pos_model_path)
+        if bool(pos_model_path) is True:
+            self.pos_model_path = pos_model_path
+            self.de_model = spacy.load(self.pos_model_path)
+            print("model loaded")
+        else:
+            self.de_model = spacy.load("de_core_news_sm")
+            print("model loaded")
+
         # decides with which probability a word is swapped or it stays the same
         self.swap_dice = swap_dice
 
-    @functools.lru_cache(maxsize=10_000)
-    @staticmethod
+    #@functools.lru_cache(maxsize=10_000)
+    #@staticmethod
     def _is_sameword(original_word, new_word):
         # clean up and lowercase at the same time
         # only be used at word level
@@ -132,13 +138,13 @@ class TextaugWord(TextAug):
         new = only_word(new_word.lower())
         return ori == new
 
-    @functools.lru_cache(maxsize=10_000)
+    #@functools.lru_cache(maxsize=10_000)
     def _gen_spacy_token(self, sent):
         doc = self.de_model(sent)
         return list(doc)
 
-    @functools.lru_cache(maxsize=1000)
-    @staticmethod
+    #@functools.lru_cache(maxsize=1000)
+    #@staticmethod
     def _is_validword(spacy_token, valid_pos=None):
         """TODO: fix docstring.
 
@@ -198,7 +204,6 @@ class TextAugEmbedding(TextaugWord):
         score_threshold=0.5,
         base_embedding="fasttext",
         swap_dice=0.2,
-        from_local=True,
         language="de",
     ):
         super().__init__(nr_aug_per_sent, pos_model_path, swap_dice)  # TODO: test online import
@@ -212,9 +217,11 @@ class TextAugEmbedding(TextaugWord):
                 import fasttext  # pylint: disable=import-outside-toplevel
                 import fasttext.util  # pylint: disable=import-outside-toplevel
 
-                if from_local is False:
+                if not embedding_path:
+                    # download and load spacy model
                     # load german model from fasttext
                     fasttext.util.download_model(self.language, if_exists="ignore")
+                    self.embedding_path = "cc.{}.300.bin".format(self.language)
                     # if from_local is false, embedding_path configured in the configuration file
                     # should be the name of model, for example: "cc.de.300.bin"
                 else:
@@ -234,7 +241,7 @@ class TextAugEmbedding(TextaugWord):
         else:
             raise ValueError("not supported embedding (yet)")
 
-    @functools.lru_cache(maxsize=1000)
+    #@functools.lru_cache(maxsize=1000)
     def get_candidates(self, word, nr=5):
         """TODO: add docstring."""
         candidates = [
