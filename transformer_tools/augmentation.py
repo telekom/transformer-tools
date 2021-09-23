@@ -159,7 +159,7 @@ class TextaugWord(TextAug):
         # swap a word with candidates or stay the same depending on given probability
         # prob: probability of being swapped
         swap = self.get_candidates(ori_word)
-        return random.choices(population=[ori_word, random.choice(swap)], weights=[1 - prob, prob])
+        return random.choices(population=[ori_word, random.choice(swap)], weights=[1 - prob, prob])[0]
 
     def get_candidates(self, word):
         """TODO: add docstring."""
@@ -174,7 +174,7 @@ class TextaugWord(TextAug):
         # print("tokens: ", aug_text)
         # for token in self._gen_spacy_token(sent):
         token_list = self._gen_spacy_token(sent)#
-        print(token_list)
+        #print(token_list)
         valid_token_idx = [idx for (idx, tok) in enumerate(token_list) if self._is_validword(tok)]
         # print("valid tokens: ", [(idx, token_list[idx].text) for idx in valid_token_idx])
         # select the token to be swapped
@@ -187,6 +187,7 @@ class TextaugWord(TextAug):
                 else word.lower()
                 for (idx, word) in enumerate(aug_text)
             ]
+        #print(aug_text)
         out = " ".join(aug_text).strip()
         out = re.sub(" +", " ", out)
         out = re.sub(" ,", ",", out)
