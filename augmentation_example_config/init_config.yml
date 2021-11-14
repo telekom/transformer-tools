@@ -1,0 +1,26 @@
+TextAugEmbedding:
+    nr_aug_per_sent: 1
+    pos_model_path: "/home/jovyan/voice_analytics/TextAug/models/textaug/de_core_news_sm-3.0.0/de_core_news_sm/de_core_news_sm-3.0.0/"
+    embedding_path: 
+        - "/home/jovyan/voice_analytics/TextAug/models/embedding/cc.de.300.bin"
+        - "/home/jovyan/voice_analytics/TextAug/models/embedding/fasttext-cbow-300-tco.bin"
+        - "/home/jovyan/voice_analytics/TextAug/models/embedding/fasttext-skipgram-300-tco.bin"
+    score_threshold: 0.5
+    swap_dice: 0.2
+    base_embedding: "fasttext"
+    language: "de"
+    from_local: True
+
+TextaugBackTrans:
+    nr_aug_per_sent: 1
+    ori_mid_model_path: "/home/jovyan/voice_analytics/TextAug/models/wmt19.de-en.joined-dict.ensemble"
+    mid_ori_model_path: "/home/jovyan/voice_analytics/TextAug/models/wmt19.en-de.joined-dict.ensemble"
+    ori_mid_checkpoints: "model1.pt:model2.pt:model3.pt:model4.pt"
+    mid_ori_checkpoints: "model1.pt:model2.pt:model3.pt:model4.pt"
+    from_local: True
+
+TextaugContextEmbed:
+    nr_aug_per_sent: 1
+    local_model_path: "/home/jovyan/voice_analytics/TextAug/models/textaug/bert-base-german-cased"
+    model: "bert-base-german-cased"
+    from_local: True

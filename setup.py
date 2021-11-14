@@ -24,7 +24,17 @@ extras_require = {
         "pylint",
         "pylintfileheader",
     ],
-    "optional": ["ml-cloud-tools", "mlflow", "seldon_core", "cloudpickle", "pyyaml"],
+    "optional": [
+        "ml-cloud-tools",
+        "mlflow",
+        "seldon_core",
+        "pandas",
+        "spacy",
+        "fairseq",
+        "cloudpickle",
+        "pyyaml",
+        "fasttext",
+    ],
     "testing": ["pytest", "packaging"],
     "doc": ["sphinx", "sphinx_rtd_theme", "myst_parser", "sphinx_copybutton"],
 }
