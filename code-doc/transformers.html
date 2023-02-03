@@ -16,7 +16,9 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/clipboard.min.js"></script>
         <script src="../_static/copybutton.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -45,7 +47,14 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../code-doc.html">Code Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="callback.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callback</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mlflow_transformers_flavor.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mlflow_transformers_flavor</span></code></a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transformers</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transformers</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transformer_tools.transformers.KFoldLabeledDataset"><code class="docutils literal notranslate"><span class="pre">KFoldLabeledDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#transformer_tools.transformers.KFoldLabeledDataset.split"><code class="docutils literal notranslate"><span class="pre">KFoldLabeledDataset.split()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#transformer_tools.transformers.LabeledDataset"><code class="docutils literal notranslate"><span class="pre">LabeledDataset</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/telekom/transformer-tools/blob/main/LICENSE">License</a></li>
@@ -68,9 +77,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../code-doc.html">Code Documentation</a> &raquo;</li>
-      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">transformers</span></code></li>
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../code-doc.html">Code Documentation</a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transformers</span></code></li>
       <li class="wy-breadcrumbs-aside">
               <a href="https://github.com/telekom/HPOflow/blob/main/docs/source/code-doc/transformers.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
@@ -81,12 +90,12 @@
            <div itemprop="articleBody">
              
   <section id="module-transformer_tools.transformers">
-<span id="transformers"></span><h1><a class="reference internal" href="#module-transformer_tools.transformers" title="transformer_tools.transformers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transformers</span></code></a><a class="headerlink" href="#module-transformer_tools.transformers" title="Permalink to this headline"></a></h1>
+<span id="transformers"></span><h1><a class="reference internal" href="#module-transformer_tools.transformers" title="transformer_tools.transformers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transformers</span></code></a><a class="headerlink" href="#module-transformer_tools.transformers" title="Permalink to this heading"></a></h1>
 <p>Transformers tools.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="transformer_tools.transformers.KFoldLabeledDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">transformer_tools.transformers.</span></span><span class="sig-name descname"><span class="pre">KFoldLabeledDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_splits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_repeats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/transformer_tools/transformers.html#KFoldLabeledDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transformer_tools.transformers.KFoldLabeledDataset" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Utility to do k-fold cross-validation on <code class="docutils literal notranslate"><span class="pre">LabeledDataset</span></code>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="transformer_tools.transformers.KFoldLabeledDataset.split">
@@ -99,7 +108,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="transformer_tools.transformers.LabeledDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">transformer_tools.transformers.</span></span><span class="sig-name descname"><span class="pre">LabeledDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encodings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/transformer_tools/transformers.html#LabeledDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transformer_tools.transformers.LabeledDataset" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.dataset.Dataset</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
 <p>Dataset with labes.</p>
 </dd></dl>
 
