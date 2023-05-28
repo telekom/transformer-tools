@@ -1,4 +1,6 @@
 # Transformer-Tools - [Code Doc](https://telekom.github.io/transformer-tools/)
+**We decided to archive this project and migrate the most important functionality to 
+[MLTB2](https://github.com/telekom/mltb2).**
 
 ## Table of Contents
 
